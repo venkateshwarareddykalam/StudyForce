@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudBud - Your Smart Study Companion</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-light: #c7d2fe;
+            --secondary-color: #06b6d4;
+            --accent-color: #f97316;
+            --success-color: #10b981;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 80% 60%, rgba(6, 182, 212, 0.05) 0%, transparent 20%);
+            background-attachment: fixed;
+        }
+
+        .gradient-border {
+            position: relative;
+            border-radius: 1rem;
+        }
+
+        .gradient-border::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            z-index: -1;
+            border-radius: inherit;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            opacity: 0.6;
+        }
+
+        .input-animated {
+            transition: all 0.3s ease;
+        }
+
+        .input-animated:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+
+        .week-card {
+            transition: all 0.3s ease;
+        }
+
+        .week-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .week-toggle {
+            transition: all 0.3s ease;
+        }
+
+        .week-toggle.active {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .progress-card {
+            transition: all 0.3s ease;
+        }
+
+        .progress-card:hover {
+            transform: scale(1.02);
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <nav class="bg-white shadow-md py-4 px-6 mb-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-4xl">📚</span>
+                <span
+                    class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-cyan-500">StudBud</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#" class="font-medium text-gray-600 hover:text-indigo-600 transition-colors">Dashboard</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-indigo-600 transition-colors">Study
+                    Analytics</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-indigo-600 transition-colors">Resources</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-indigo-600 transition-colors">Communities</a>
+                <a href="http://localhost:8501" class="font-medium text-gray-600 hover:text-indigo-600 transition-colors">Chatbot</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-bell text-gray-600"></i>
+                </button>
+                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <span class="font-semibold text-indigo-600">JS</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left sidebar with stats -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="text-center mb-4">
+                        <div class="w-20 h-20 mx-auto rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="font-semibold text-2xl text-indigo-600">JS</span>
+                        </div>
+                        <h3 class="mt-3 font-semibold text-lg">John Smith</h3>
+                        <p class="text-sm text-gray-500">Computer Science Student</p>
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="mb-3">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-600">Study Streak</span>
+                                <span class="text-sm font-medium text-indigo-600">7 days</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-600">Weekly Goal</span>
+                                <span class="text-sm font-medium text-indigo-600">65%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-cyan-500 h-2 rounded-full" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-600">Focus Score</span>
+                                <span class="text-sm font-medium text-indigo-600">82%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-orange-500 h-2 rounded-full" style="width: 82%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4 flex items-center">
+                        <i class="fas fa-fire text-orange-500 mr-2"></i> Study Streaks
+                    </h3>
+                    <div class="flex justify-between mb-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-indigo-600">7</div>
+                            <div class="text-xs text-gray-500">Current</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-indigo-600">14</div>
+                            <div class="text-xs text-gray-500">Best</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-indigo-600">63</div>
+                            <div class="text-xs text-gray-500">Total Days</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">M</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">T</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">W</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">T</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">F</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-medium text-indigo-600">S</span>
+                        </div>
+                        <div class="h-8 w-8 rounded-md bg-indigo-600 flex items-center justify-center">
+                            <span class="text-xs font-medium text-white">S</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-xl shadow-lg p-6 text-white">
+                    <h3 class="font-semibold text-lg mb-4">Pro Tip</h3>
+                    <p class="text-indigo-100 text-sm mb-4">Try the Pomodoro technique: 25 minutes of focused study
+                        followed by a 5-minute break!</p>
+                    <button class="bg-white text-indigo-600 font-medium px-4 py-2 rounded-lg text-sm">Learn
+                        More</button>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <div class="lg:col-span-9">
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8 relative overflow-hidden">
+                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-indigo-100 rounded-full opacity-70"></div>
+                    <div class="absolute top-10 right-10 text-4xl floating-icon">🎯</div>
+
+                    <h1
+                        class="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-cyan-500">
+                        Create Your Study Plan
+                    </h1>
+                    <p class="text-gray-600 mb-6">
+                        Tell us about your study goals and preferences, and we'll generate a personalized study plan
+                        just for you.
+                    </p>
+
+                    <form id="studyPlanForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="subjects" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <i class="fas fa-book text-indigo-500 mr-1"></i> Subjects (comma-separated)
+                                </label>
+                                <div class="tooltip">
+                                    <input type="text" id="subjects" required
+                                        class="input-animated w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        placeholder="Math, Physics, Programming...">
+                                    <span class="tooltip-text">List all the subjects you need to study</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="study_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <i class="fas fa-clock text-indigo-500 mr-1"></i> Daily Study Hours
+                                </label>
+                                <div class="tooltip">
+                                    <input type="number" id="study_hours" min="1" required
+                                        class="input-animated w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        placeholder="How many hours per day?">
+                                    <span class="tooltip-text">How many hours can you dedicate to studying each
+                                        day?</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="strengths" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <i class="fas fa-star text-indigo-500 mr-1"></i> Your Strengths (comma-separated)
+                                </label>
+                                <div class="tooltip">
+                                    <input type="text" id="strengths"
+                                        class="input-animated w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        placeholder="Problem solving, Memorization...">
+                                    <span class="tooltip-text">What are you good at?</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="weaknesses" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <i class="fas fa-bolt text-indigo-500 mr-1"></i> Your Weaknesses (comma-separated)
+                                </label>
+                                <div class="tooltip">
+                                    <input type="text" id="weaknesses"
+                                        class="input-animated w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        placeholder="Focus, Time management...">
+                                    <span class="tooltip-text">What do you struggle with?</span>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label for="goals" class="block text-sm font-medium text-gray-700 mb-1">
+                                    <i class="fas fa-bullseye text-indigo-500 mr-1"></i> Your Study Goals
+                                </label>
+                                <div class="tooltip">
+                                    <input type="text" id="goals" required
+                                        class="input-animated w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        placeholder="Ace my finals, Learn new programming language...">
+                                    <span class="tooltip-text">What are you trying to achieve?</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <button type="submit"
+                                class="btn-primary flex items-center justify-center px-8 py-3 rounded-xl text-white font-medium text-lg">
+                                <span>Generate Study Plan</span>
+                                <i class="fas fa-magic ml-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="studyPlanResult" class="study-plan hidden">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Your Personalized Study Plan</h2>
+                        <div class="flex space-x-2">
+                            <button
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-download mr-1"></i> Save
+                            </button>
+                            <button
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-share-alt mr-1"></i> Share
+                            </button>
+                            <button
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-print mr-1"></i> Print
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="weeks-container" class="space-y-4"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6 progress-card">
+                        <h3 class="font-semibold text-lg mb-4">Subject Progress</h3>
+                        <canvas id="subjectProgressChart" height="200"></canvas>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 progress-card">
+                        <h3 class="font-semibold text-lg mb-4">Weekly Study Hours</h3>
+                        <canvas id="weeklyHoursChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-semibold text-lg mb-4">Study Resource Recommendations</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div class="bg-indigo-100 rounded-lg p-2 text-indigo-600">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <span
+                                    class="text-xs font-medium bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full">Video</span>
+                            </div>
+                            <h4 class="font-medium mt-3">Khan Academy: Calculus</h4>
+                            <p class="text-sm text-gray-500 mt-1">Comprehensive calculus video series.</p>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div class="bg-cyan-100 rounded-lg p-2 text-cyan-600">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <span
+                                    class="text-xs font-medium bg-cyan-100 text-cyan-600 px-2 py-1 rounded-full">Article</span>
+                            </div>
+                            <h4 class="font-medium mt-3">Effective Study Techniques</h4>
+                            <p class="text-sm text-gray-500 mt-1">Research-backed methods to improve retention.</p>
+                        </div>
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div class="bg-orange-100 rounded-lg p-2 text-orange-600">
+                                    <i class="fas fa-puzzle-piece"></i>
+                                </div>
+                                <span
+                                    class="text-xs font-medium bg-orange-100 text-orange-600 px-2 py-1 rounded-full">Interactive</span>
+                            </div>
+                            <h4 class="font-medium mt-3">Programming Practice</h4>
+                            <p class="text-sm text-gray-500 mt-1">Hands-on coding challenges with instant feedback.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize charts
+            initializeCharts();
+
+            // Set up form submission
+            const studyPlanForm = document.getElementById('studyPlanForm');
+            if (studyPlanForm) {
+                studyPlanForm.addEventListener('submit', handleFormSubmit);
+            }
+
+            // Initialize tooltips
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                tooltip.addEventListener('mouseenter', showTooltip);
+                tooltip.addEventListener('mouseleave', hideTooltip);
+            });
+        });
+
+        /**
+         * Initialize charts with sample data
+         */
+        function initializeCharts() {
+            // Subject Progress Chart
+            const subjectCtx = document.getElementById('subjectProgressChart').getContext('2d');
+            const subjectProgressChart = new Chart(subjectCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Math', 'Physics', 'Programming', 'Data Science', 'Web Dev'],
+                    datasets: [{
+                        label: 'Progress (%)',
+                        data: [75, 60, 85, 45, 70],
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Weekly Study Hours Chart
+            const weeklyCtx = document.getElementById('weeklyHoursChart').getContext('2d');
+            const weeklyHoursChart = new Chart(weeklyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Target Hours',
+                        data: [3, 3, 3, 3, 3, 4, 4],
+                        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                        borderColor: 'rgba(6, 182, 212, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Actual Hours',
+                        data: [3.5, 2.5, 3, 4, 2, 4.5, 3.5],
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Handle form submission and API call to generate study plan
+         * @param {Event} event - Form submit event
+         */
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+
+            // Get form values
+            const subjects = document.getElementById('subjects').value.split(',').map(s => s.trim());
+            const study_hours = parseInt(document.getElementById('study_hours').value);
+            const strengths = document.getElementById('strengths').value.split(',').map(s => s.trim());
+            const weaknesses = document.getElementById('weaknesses').value.split(',').map(s => s.trim());
+            const goals = document.getElementById('goals').value;
+
+            // Show loading state
+            const studyPlanResult = document.getElementById('studyPlanResult');
+            studyPlanResult.classList.remove('hidden');
+            studyPlanResult.innerHTML = `
+        <div class="flex justify-center items-center p-10">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <p class="ml-3 text-indigo-600 font-medium">Generating your study plan...</p>
+        </div>
+    `;
+
+            try {
+                // Send request to API
+                const response = await fetch("/generate-study-plan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ subjects, study_hours, strengths, weaknesses, goals })
+                });
+
+                const data = await response.json();
+
+                if (data.study_plan) {
+                    // Format and display the study plan
+                    formatStudyPlan(data.study_plan);
+                } else {
+                    studyPlanResult.innerHTML = `
+                <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+                    <p class="font-medium">Error generating study plan.</p>
+                    <p>Please try again or contact support if the problem persists.</p>
+                </div>
+            `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                studyPlanResult.innerHTML = `
+            <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+                <p class="font-medium">Network error occurred.</p>
+                <p>Please check your connection and try again.</p>
+            </div>
+        `;
+            }
+
+            // Scroll to the result
+            studyPlanResult.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * Format the study plan text into structured HTML
+         * @param {string} planText - The raw study plan text from the API
+         */
+        function formatStudyPlan(planText) {
+            const studyPlanResult = document.getElementById('studyPlanResult');
+
+            // Add the plan header
+            let header = `
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-800">Your Personalized Study Plan</h2>
+            <div class="flex space-x-2">
+                <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-download mr-1"></i> Save
+                </button>
+                <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-share-alt mr-1"></i> Share
+                </button>
+                <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-print mr-1"></i> Print
+                </button>
+            </div>
+        </div>
+    `;
+
+            console.log(planText)
+            // Parse weeks from the plan text
+            let weeks = planText.split(/\*\*Week\s+\d+/);
+            // console.log("Weeks Array:", weeks);
+
+            let weeksContainer = '<div id="weeks-container" class="space-y-4">';
+            // console.log(weeks)
+
+
+            weeks.forEach((week, index) => {
+                if (index === 0) return; // Skip first empty split
+
+                console.log("Processing week content:", week);
+
+                // Process the content for better formatting
+                let content = week.replace(/\*\*/g, ''); // Remove markdown bold
+
+                // Format week content with proper styling
+                weeksContainer += `
+            <div class="bg-white rounded-xl shadow-lg p-6 week-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-lg">Week ${index}</h3>
+                    <button class="week-toggle px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200" 
+        onclick="toggleWeek(this, ${index})">
+    Show Details
+</button>
+
+                </div>
+                <div id="week-${index}" class="week-content hidden">
+                    ${formatWeekContent(content)}
+                </div>
+            </div>
+        `;
+            });
+
+            weeksContainer += '</div>';
+
+            // Set the formatted HTML
+            studyPlanResult.innerHTML = header + weeksContainer;
+        }
+
+        /**
+         * Format the content of a single week
+         * @param {string} content - The week content from the API
+         * @returns {string} Formatted HTML for the week content
+         */
+        function formatWeekContent(content) {
+            // Split by days and format each day
+            let days = content.split(/Monday:|Tuesday:|Wednesday:|Thursday:|Friday:|Saturday:|Sunday:/g);
+            let dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            let formattedContent = '';
+
+            // Skip the first element which is usually just the week heading
+            for (let i = 1; i < days.length; i++) {
+                if (days[i].trim()) {
+                    formattedContent += `
+                <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 class="font-medium text-gray-800 mb-2">${dayNames[i - 1]}</h4>
+                    <div class="space-y-2">
+                        ${formatDayContent(days[i])}
+                    </div>
+                </div>
+            `;
+                }
+            }
+
+            return formattedContent;
+        }
+
+        /**
+         * Format the content of a single day
+         * @param {string} content - The day content from the API
+         * @returns {string} Formatted HTML for the day content
+         */
+        function formatDayContent(content) {
+            // Replace newlines with proper spacing
+            content = content.replace(/\n/g, '<br>').trim();
+
+            // Try to identify and format time slots and subjects
+            let formattedContent = '';
+
+            // Simple regex to find time-subject patterns like "9:00 AM - 10:30 AM: Math"
+            const timeRegex = /(\d{1,2}:\d{2}\s*(?:AM|PM)\s*-\s*\d{1,2}:\d{2}\s*(?:AM|PM)):\s*(.*?)(?=\d{1,2}:\d{2}\s*(?:AM|PM)|$)/g;
+
+            let timeMatch;
+            let hasMatches = false;
+
+            while ((timeMatch = timeRegex.exec(content + ' ')) !== null) {
+                hasMatches = true;
+                const timeSlot = timeMatch[1].trim();
+                const subject = timeMatch[2].trim();
+
+                // Generate a color for the subject
+                const colorClass = getSubjectColorClass(subject);
+
+                formattedContent += `
+            <div class="flex items-center">
+                <div class="w-32 text-sm text-gray-500">${timeSlot}</div>
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full ${colorClass} mr-2"></div>
+                        <span class="font-medium">${subject}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+
+            // If no time-subject patterns were found, just use the raw content
+            if (!hasMatches) {
+                formattedContent = `<div class="text-gray-700">${content}</div>`;
+            }
+
+            return formattedContent;
+        }
+
+        /**
+         * Toggle week visibility
+         * @param {number} index - Week index
+         */
+        function toggleWeek(button, index) {
+            const weekContent = document.getElementById(`week-${index}`);
+
+            if (weekContent) {
+                if (weekContent.classList.contains('hidden')) {
+                    weekContent.classList.remove('hidden');
+                    weekContent.style.display = "block";  // ✅ Ensure it's displayed
+                    button.textContent = 'Hide Details';
+                } else {
+                    weekContent.classList.add('hidden');
+                    weekContent.style.display = "none";  // ✅ Ensure it's hidden
+                    button.textContent = 'Show Details';
+                }
+            }
+        }
+
+
+        /**
+         * Get a consistent color class for a subject
+         * @param {string} subject - Subject name
+         * @returns {string} Color class
+         */
+        function getSubjectColorClass(subject) {
+            // Generate a consistent hash from the subject name
+            let hash = 0;
+            for (let i = 0; i < subject.length; i++) {
+                hash = subject.charCodeAt(i) + ((hash << 5) - hash);
+            }
+
+            // Use modulo to select from predefined colors
+            const colors = [
+                'bg-indigo-500',
+                'bg-cyan-500',
+                'bg-orange-500',
+                'bg-emerald-500',
+                'bg-rose-500',
+                'bg-amber-500',
+                'bg-violet-500',
+                'bg-sky-500'
+            ];
+
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        /**
+         * Show tooltip
+         * @param {Event} e - Mouse enter event
+         */
+        function showTooltip(e) {
+            const tooltip = e.currentTarget.querySelector('.tooltip-text');
+            if (tooltip) {
+                tooltip.style.visibility = 'visible';
+                tooltip.style.opacity = '1';
+            }
+        }
+
+        /**
+         * Hide tooltip
+         * @param {Event} e - Mouse leave event
+         */
+        function hideTooltip(e) {
+            const tooltip = e.currentTarget.querySelector('.tooltip-text');
+            if (tooltip) {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+            }
+        }
+    </script>
+</body>
+
+</html>
